@@ -279,12 +279,13 @@ function createHexagons(rows, cols) {
 
             // Add click event listener to each hexagon
             hexagon.addEventListener('click', () => {
-        let index = [row, col]; // Pass index as an array
-        console.log(index);
-        color = hexagon.style.backgroundColor;
-        let nation = getNationByColor(color);
-        updateProvinceInfoBar(availableNations[nation], index);
-});
+            let index = [row, col]; // Pass index as an array
+            console.log(index);
+            color = hexagon.style.backgroundColor;
+            console.log(color);
+            let nation = getNationByColor(color);
+            updateProvinceInfoBar(availableNations[nation], index);
+            });
 
             hexagons[row][col] = hexagon; // Store hexagon in the 2D array
         }
@@ -327,23 +328,27 @@ const availableNations = [
    new Nation('Romania','rgb(206, 17, 38)', '#CE1126'),
    new Nation('Moldova','rgb(255, 209, 0)', '#FFD100'),
 ];
-
+const seaColor = "";
 function getNationByColor(color) {
-   let n = availableNations.findIndex((nation) => nation.color === color);
-   console.log(`Color checked: ${color}, Nation index: ${n}`); // Debugging log
-   return n;
+    let n;
+    n = availableNations.findIndex((nation) => nation.color === color);
+    console.log(`Color checked: ${color}, Nation index: ${n}`); // Debugging log
+    return n;
 }
+
 var mob = document.getElementById("add");
 // Function to update the province info bar
 function updateProvinceInfoBar(nation, index) {
     const provinceInfoBar = document.getElementById('provinceInfoBar');
     if (!nation) {
-        provinceInfoBar.innerHTML = `<h3>No nation found</h3>`;
+        provinceInfoBar.innerHTML = `<h3>Sea</h3>
+        <p>Cordinates: ${index}</p>`;
     } else {
         provinceInfoBar.innerHTML = `
             <h3>${nation.name}</h3>
-            <p>Color: ${nation.color}</p>
+            <p>Cordinates: ${index}</p>
             <button id="add" type="button">Mobilize</button>
+            
         `;
         if (color != selectedNationColor) {
             document.getElementById("add").style.display = "none";
@@ -371,14 +376,15 @@ function countHexagonsByColor(color) {
             count++;
         }
     });
-    count /= 2
+    count /= 2;
+    count = Math.round(count);
     console.log(`Count of hexagons with color ${color}: ${count}`);
     let distex  =  count + " provinces";
     Procou.textContent = distex;
 }
 
 // Set an interval to count hexagons every minute
-var selectedNationColor
+var selectedNationColor;
 setInterval(() => {
     const nationSelect = document.getElementById('nation-select');
     const selectedNation = availableNations.find(nation => nation.name === nationSelect.value);
@@ -473,6 +479,7 @@ function updateGameState(selectedNation) {
     nationFlag.src = `${selectedNation.name.toLowerCase()}.png`; // Example: Update the flag image
     nationFlag.style.display = 'block'; // Show the flag
     console.log(`Game state updated for ${selectedNation.name}`); // Debugging log
+    availableNations.push(new Nation('Sea','rgb(0, 170, 255)',' #00aaff'));
 }
 
 // Call the function to display the nation selection UI immediately
@@ -500,13 +507,13 @@ class unit {
         this.speed = speed;
     }
 }
-const allUnits = [
+const landUnits = [
     new unit("M1A1 Abrams", 50, 50, 10, 5,"tank1.png", 3),
     new unit("T80", 25, 40, 8, 5,"tank2.png", 2),
-    new unit("F16", 20, 30, 12, 6,"f16.png", 8),
+    new unit("F16", 20, 30, 12, 6,"f16.png", 15),
     new unit("towed artilerry", 7, 10, 4, 3,"towedArtillery.png", 12 ),
-    new unit("Aircraft carrier", 100, 80, 15, 15, "aircarier.png", 10),
-    new unit("infrantry", 10, 15, 6, 9, "infrantry.png", 11)
+    new unit("infrantry", 10, 15, 6, 9, "infrantry.png", 11),
+    new unit("Leopard 2", 38, 45, 9, 5,"tank3.png", 3)
 ];
 function spawnArmy(index) {
     const armyContainer = document.getElementById('armyContainer');
@@ -515,10 +522,10 @@ function spawnArmy(index) {
     const armySelect = document.createElement('select');
     armySelect.id = 'unit-select';
 
-    allUnits.forEach((unit) => {
+    landUnits.forEach((unit) => {
         const option = document.createElement('option');
         option.value = unit.name;
-        option.text = unit.name;
+        option.text = unit.name + "/price:"  + unit.cost;
         armySelect.appendChild(option);
     });
 
@@ -526,7 +533,7 @@ function spawnArmy(index) {
     armyButton.textContent = 'Spawn Unit';
     armyButton.onclick = () => {
     const selectedUnitName = armySelect.value;
-    const selectedUnit = allUnits.find((unit) => unit.name === selectedUnitName);
+    const selectedUnit = landUnits.find((unit) => unit.name === selectedUnitName);
     console.log(`Spawned unit: ${selectedUnit.name}`); // Debugging log
     // Update the game state with the selected nation
     spawnNewForce(selectedUnit, index);
@@ -543,6 +550,7 @@ function getCountryFlag(index) {
     console.log(`Country flag: flags/${countryName}.png`);
     return `${countryName}.png`;
 }
+const unitElement = document.createElement('div');
 function spawnNewForce(unit, index) {
     // Check if the player has enough cash to spawn the unit
     if (cash >= unit.cost) {
@@ -553,13 +561,14 @@ function spawnNewForce(unit, index) {
         // Get the country flag image
         const countryFlag = getCountryFlag(index);
 
-        // Create a new HTML element to represent the unit
+       // Create a new HTML element to represent the unit
         const unitElement = document.createElement('div');
         unitElement.classList.add('unit');
+        unitElement.speed = unit.speed;
         unitElement.style.backgroundImage = `url(${unit.image})`;
         unitElement.style.width = '25px';
         unitElement.style.height = '15px';
-        unitElement.style.position = 'absolute'; // Add this line
+        unitElement.style.position = 'absolute';
         
 
         const flagElement = document.createElement('img');
@@ -588,10 +597,18 @@ function spawnNewForce(unit, index) {
 let manageBar = document.createElement('div');
 manageBar.classList.add('manage-bar');
 manageBar.style.position = 'absolute'; // Add this line
-manageBar.style.width = '100px';
-manageBar.style.height = '50px';
+manageBar.style.width = '90px';
+manageBar.style.height = '150px';
 document.body.appendChild(manageBar);
 manageBar.style.zIndex = '1000';
+
+// Create a close button for the manage bar
+const closeButton = document.createElement('button');
+closeButton.textContent = 'X';
+closeButton.style.position = 'absolute';
+closeButton.style.top = '5px';
+closeButton.style.right = '5px';
+manageBar.appendChild(closeButton);
 
 // Create a move button for the unit
 const moveButton = document.createElement('button');
@@ -613,15 +630,113 @@ let hexMapElement = document.querySelector('.hexMap');
 hexMapElement.appendChild(manageBar); // Add this line
 
 // Position the manage bar near the unit
+    hexMap = document.querySelector('.hexMap');
 let unitRect = unitElement.getBoundingClientRect();
-manageBar.style.left = `${unitRect.left + 60}px`;
-manageBar.style.top = `${unitRect.top + 60}px`;
+let hexMapRect = hexMap.getBoundingClientRect();
+manageBar.style.left = `${unitRect.left - hexMapRect.left + 60}px`;
+manageBar.style.top = `${unitRect.top - hexMapRect.top + 60}px`;
 
         // Add event listeners to the buttons
-        moveButton.onclick = () => {
-        
-        }
+function animateMovement(unitElement, targetRow, targetCol, currentIndex) {
+    let hexagon = hexagons[currentIndex[0]][currentIndex[1]];
+    let offsetLeft = parseInt(hexagon.style.left) || 0;
+    let offsetTop = parseInt(hexagon.style.top) || 0;
+    unitElement.style.left = `${offsetLeft + 40}px`;
+    unitElement.style.top = `${offsetTop + 40}px`;
 
+    let nextIndex = [currentIndex[0], currentIndex[1]];
+    if (currentIndex[0] < targetRow) {
+        nextIndex[0]++;
+    } else if (currentIndex[0] > targetRow) {
+        nextIndex[0]--;
+    } else if (currentIndex[1] < targetCol) {
+        nextIndex[1]++;
+    } else if (currentIndex[1] > targetCol) {
+        nextIndex[1]--;
+    }
+
+    if (nextIndex[0] === targetRow && nextIndex[1] === targetCol) {
+        let targetHexagon = hexagons[targetRow][targetCol];
+        let offsetLeft = parseInt(targetHexagon.style.left) || 0;
+        let offsetTop = parseInt(targetHexagon.style.top) || 0;
+        unitElement.style.left = `${offsetLeft + 40}px`;
+        unitElement.style.top = `${offsetTop + 40}px`;
+
+        // Update the hexagon's color to the chosen nation's color
+        if (targetHexagon.style.backgroundColor !== selectedNationColor) {
+    targetHexagon.style.backgroundColor = selectedNationColor;
+    hexagons[targetRow][targetCol] = targetHexagon;
+} else if (targetHexagon.style.backgroundColor === seaColor ) {
+    console.log('Cannot conquer sea province');
+}
+        return;
+    }
+
+    currentIndex = nextIndex;
+
+    setTimeout(() => {
+        animateMovement(unitElement, targetRow, targetCol, currentIndex);
+    }, 10000 / unitElement.speed);
+}
+
+moveButton.onclick = () => {
+    let target = prompt("Enter the coordinates of the hexagon you want to move your troops to (e.g., '10,15'): ");
+    let targetCoords = target.split(',').map(Number);
+    let targetRow = targetCoords[0];
+    let targetCol = targetCoords[1];
+
+    if (targetRow < 0 || targetRow >= hexagons.length || targetCol < 0 || targetCol >= hexagons[0].length) {
+        console.log('Invalid target coordinates');
+        return;
+    }
+
+    let targetHexagon = hexagons[targetRow][targetCol];
+    let targetColor = targetHexagon.style.backgroundColor;
+
+    // Check if the target hexagon is a sea area
+    if (targetColor === seaColor) {
+        console.log('Cannot conquer sea province');
+        return;
+    }
+
+    if (targetColor == Nation.color) {
+        let stop = confirm("If you send army to the target, you can unluckly start a war. Are you going to continue?");
+        if (stop === true) {
+            return;
+        }
+    }
+
+    let unitRect = unitElement.getBoundingClientRect();
+    let hexMapRect = hexMap.getBoundingClientRect();
+    let unitLeft = unitRect.left - hexMapRect.left;
+    let unitTop = unitRect.top - hexMapRect.top;
+
+    let currentIndex = [0, 0];
+    for (let row = 0; row < hexagons.length; row++) {
+        for (let col = 0; col < hexagons[row].length; col++) {
+            let hexagon = hexagons[row][col];
+            let offsetLeft = parseInt(hexagon.style.left) || 0;
+            let offsetTop = parseInt(hexagon.style.top) || 0;
+            if (unitLeft >= offsetLeft && unitLeft <= offsetLeft + 100 && unitTop >= offsetTop && unitTop <= offsetTop + 100) {
+                currentIndex = [row, col];
+                break;
+            }
+        }
+    }
+
+    animateMovement(unitElement, targetRow, targetCol, currentIndex);
+}
+
+unitElement.onclick = () => {
+    manageBar.style.display = 'block';
+    console.log('Unit element clicked');
+
+    let hexMap = document.querySelector('.hexMap');
+    let unitRect = unitElement.getBoundingClientRect();
+    let hexMapRect = hexMap.getBoundingClientRect();
+    manageBar.style.left = `${unitRect.left - hexMapRect.left + 60}px`;
+    manageBar.style.top = `${unitRect.top - hexMapRect.top + 60}px`;
+}
         attackButton.onclick = () => {
             
         }
@@ -629,10 +744,9 @@ manageBar.style.top = `${unitRect.top + 60}px`;
         retreatButton.onclick = () => {
        
         };
-        unitElement.onclick = () => {
-            manageBar.style.display = 'block';
-            console.log('Unit element clicked');
-        }
+        closeButton.onclick = () => {
+            manageBar.style.display = 'none';
+          }
         // Update the game state with the new unit
         console.log(`Spawned unit: ${unit.name} at index ${index}`);
     } else {
